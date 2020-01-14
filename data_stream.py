@@ -65,18 +65,23 @@ def run_spark_job(spark):
         .select("DF.*")
     
     # TODO select original_crime_type_name and disposition
-    distinct_table = service_table.select("original_crime_type_name","disposition").writeStream.format('console').start()
+    distinct_table = service_table.select("call_date_time","original_crime_type_name","disposition")
 
     # count the number of original crime type
-    #agg_df = 
+    agg_df = distinct_table.select("*").withWatermark("call_date_time","3600 seconds").groupby("call_date_time","original_crime_type_name").count()
 
     # TODO Q1. Submit a screen shot of a batch ingestion of the aggregation
     # TODO write output stream
-    #query = agg_df \
+    query = agg_df \
+        .writeStream \
+        .trigger(processingTime="10 seconds") \
+        .format("console") \
+        .option("truncate", "false") \
+        .start()
             
 
     # TODO attach a ProgressReporter
-    #query.awaitTermination()
+    query.awaitTermination()
 
     # TODO get the right radio code json path
     radio_code_json_filepath = "radio_code.json"
@@ -89,10 +94,10 @@ def run_spark_job(spark):
     radio_code_df = radio_code_df.withColumnRenamed("disposition_code", "disposition")
 
     # TODO join on disposition column
-    #join_query = agg_df.
+    join_query = agg_df.join(query.disposition == radio_code_df.disposition,how=="right")
 
 
-    #join_query.awaitTermination()
+    join_query.awaitTermination()
 
 
 if __name__ == "__main__":
@@ -102,6 +107,7 @@ if __name__ == "__main__":
     spark = SparkSession \
         .builder \
         .master("local[*]") \
+        .config("spark.ui.port",3000) \
         .appName("KafkaSparkStructuredStreaming") \
         .getOrCreate()
 
