@@ -15,7 +15,7 @@ class ProducerServer(KafkaProducer):
             parsed_json = json.load(f)
             for line in parsed_json:
                 message = self.dict_to_binary(line)
-                print(message)
+                print("ping")
                 # TODO send the correct data
                 if message is not None:
                     self.send(self.topic,message)
