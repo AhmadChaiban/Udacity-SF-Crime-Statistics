@@ -95,8 +95,7 @@ def run_spark_job(spark):
 
     # TODO join on disposition column
     join_query = agg_df.join(query.disposition == radio_code_df.disposition,how=="right")
-
-
+    
     join_query.awaitTermination()
 
 
@@ -108,6 +107,9 @@ if __name__ == "__main__":
         .builder \
         .master("local[*]") \
         .config("spark.ui.port",3000) \
+        .config('spark.default.parallelism',15000) \
+        .config('spark.streaming.kafka.maxRatePerPartition',20)\
+        .config('spark.sql.shuffle.partitions',20)\
         .appName("KafkaSparkStructuredStreaming") \
         .getOrCreate()
 
